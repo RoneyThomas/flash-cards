@@ -1,3 +1,8 @@
+### Create Virtual Environment
+```
+python3 -m venv .venv
+```
+
 ### Activating virtual environment
 
 In terminal mac/linux
@@ -18,7 +23,7 @@ In powershell windows
 ### Install dependencies
 
 ```
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
 ### Running Flask app
