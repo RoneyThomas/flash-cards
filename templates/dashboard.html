@@ -171,6 +171,7 @@
             <a href="{{ url_for('create_card') }}" class="nav-btn">Create Card</a>
             {% if current_user.role == 'admin' %}
             <a href="{{ url_for('admin_users') }}" class="nav-btn">Manage Users</a>
+            <a href="{{ url_for('admin_subjects') }}" class="nav-btn">Manage Subjects</a>
             {% endif %}
             <a href="{{ url_for('logout') }}" class="nav-btn">Logout</a>
         </div>

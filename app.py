@@ -196,7 +196,7 @@ def study(subject_id):
 @login_required
 def view_subject(subject_id):
     subject = Subject.query.get_or_404(subject_id)
-    if subject.user_id != current_user.id:
+    if subject.user_id != current_user.id and current_user.role != 'admin':
         flash("Access denied.", "error")
         return redirect(url_for('index'))
     return render_template("view_subject.html", subject=subject)
@@ -225,6 +225,16 @@ def admin_users():
     users = User.query.all()
     return render_template("admin_users.html", users=users)
 
+@app.route("/admin/subjects")
+@login_required
+def admin_subjects():
+    if current_user.role != 'admin':
+        flash("Access denied. Admin privileges required.", "error")
+        return redirect(url_for('index'))
+    
+    subjects = Subject.query.all()
+    return render_template("admin_subjects.html", subjects=subjects)
+
 @app.route("/admin/users/delete/<int:user_id>", methods=["POST"])
 @login_required
 def delete_user(user_id):
@@ -241,6 +251,33 @@ def delete_user(user_id):
     db.session.commit()
     flash(f"User {user.username} deleted successfully.", "success")
     return redirect(url_for('admin_users'))
+
+@app.route("/admin/subjects/delete/<int:subject_id>", methods=["POST"])
+@login_required
+def delete_subject(subject_id):
+    if current_user.role != 'admin':
+        flash("Access denied. Admin privileges required.", "error")
+        return redirect(url_for('index'))
+    
+    subject = Subject.query.get_or_404(subject_id)
+    db.session.delete(subject)
+    db.session.commit()
+    flash(f"Subject '{subject.name}' deleted successfully.", "success")
+    return redirect(url_for('admin_subjects'))
+
+@app.route("/admin/cards/delete/<int:card_id>", methods=["POST"])
+@login_required
+def delete_card(card_id):
+    if current_user.role != 'admin':
+        flash("Access denied. Admin privileges required.", "error")
+        return redirect(url_for('index'))
+    
+    card = Flashcard.query.get_or_404(card_id)
+    subject_id = card.subject_id
+    db.session.delete(card)
+    db.session.commit()
+    flash("Flashcard deleted successfully.", "success")
+    return redirect(url_for('view_subject', subject_id=subject_id))
 
 if __name__ == "__main__":
     with app.app_context():
