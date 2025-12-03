@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Student Progress</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .welcome {
+            color: #333;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-left: 10px;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .subject-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+        }
+
+        .subject-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .card-list {
+            list-style: none;
+        }
+
+        .card-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+
+        .question {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .answer {
+            color: #667eea;
+        }
+
+        .alert {
+            max-width: 800px;
+            margin: 0 auto 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background-color: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="welcome">
+            Student: {{ student.username }}
+        </div>
+        <div>
+            <a href="{{ url_for('view_class', class_id=classroom.id) }}" class="nav-btn">Back to Class</a>
+            <a href="{{ url_for('logout') }}" class="nav-btn">Logout</a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="content">
+        <h2>Flashcards Created by {{ student.username }}</h2>
+
+        {% for subject in subjects %}
+        <div class="subject-card">
+            <div class="subject-title">{{ subject.name }}</div>
+            <ul class="card-list">
+                {% for card in subject.flashcards %}
+                <li class="card-item">
+                    <div class="question">Q: {{ card.question }}</div>
+                    <div class="answer">A: {{ card.answer }}</div>
+                </li>
+                {% else %}
+                <li style="color: #666; font-style: italic;">No cards in this subject.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <div style="text-align: center; color: #666; padding: 20px;">
+            This student hasn't created any subjects yet.
+        </div>
+        {% endfor %}
+    </div>
+</body>
+
+</html>

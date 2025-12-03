@@ -185,6 +185,52 @@
     {% endif %}
     {% endwith %}
 
+    {% if purchased_subjects %}
+    <h2 style="color: #333; margin: 40px auto 20px; max-width: 1000px;">Purchased Subjects</h2>
+    <div class="content">
+        <div class="subjects-grid">
+            {% for subject in purchased_subjects %}
+            <div class="subject-card" style="border: 2px solid #48bb78;">
+                <div>
+                    <div class="subject-title">{{ subject.name }}</div>
+                    <div class="card-count">{{ subject.flashcards|length }} cards</div>
+                    <div style="color: #48bb78; font-size: 12px; font-weight: 600; text-transform: uppercase;">Purchased
+                    </div>
+                </div>
+                <div class="actions">
+                    <a href="{{ url_for('study', subject_id=subject.id) }}" class="action-btn study-btn">Study</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if current_user.role == 'teacher' %}
+    <h2 style="color: #333; margin: 40px auto 20px; max-width: 1000px;">My Classes</h2>
+    <div class="content">
+        <div class="subjects-grid">
+            {% for classroom in classrooms %}
+            <div class="subject-card" style="border: 2px solid #667eea;">
+                <div>
+                    <div class="subject-title">{{ classroom.name }}</div>
+                    <div class="card-count">{{ classroom.students|length }} students</div>
+                </div>
+                <div class="actions">
+                    <a href="{{ url_for('view_class', class_id=classroom.id) }}" class="action-btn manage-btn">Manage
+                        Class</a>
+                </div>
+            </div>
+            {% endfor %}
+
+            <a href="{{ url_for('create_class') }}" class="subject-card create-subject-card">
+                <span class="create-text">+ Create New Class</span>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <h2 style="color: #333; margin: 40px auto 20px; max-width: 1000px;">My Subjects</h2>
     <div class="content">
         <div class="subjects-grid">
             {% for subject in subjects %}
