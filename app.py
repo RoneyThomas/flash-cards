@@ -375,6 +375,28 @@ def delete_user(user_id):
     flash(f"User {user.username} deleted successfully.", "success")
     return redirect(url_for('admin_users'))
 
+@app.route("/admin/users/change_role/<int:user_id>", methods=["POST"])
+@login_required
+def change_role(user_id):
+    if current_user.role != 'admin':
+        flash("Access denied. Admin privileges required.", "error")
+        return redirect(url_for('index'))
+    
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash("You cannot change your own role.", "error")
+        return redirect(url_for('admin_users'))
+        
+    new_role = request.form.get("role")
+    if new_role not in ['student', 'teacher', 'admin']:
+        flash("Invalid role selected.", "error")
+        return redirect(url_for('admin_users'))
+        
+    user.role = new_role
+    db.session.commit()
+    flash(f"User {user.username}'s role changed to {new_role}.", "success")
+    return redirect(url_for('admin_users'))
+
 @app.route("/admin/subjects/delete/<int:subject_id>", methods=["POST"])
 @login_required
 def delete_subject(subject_id):

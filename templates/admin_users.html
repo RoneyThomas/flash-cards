@@ -175,6 +175,17 @@
                             style="display:inline;">
                             <button type="submit" class="delete-btn">Delete</button>
                         </form>
+                        <form action="{{ url_for('change_role', user_id=user.id) }}" method="POST"
+                            style="display:inline; margin-left: 10px;">
+                            <select name="role" onchange="this.form.submit()"
+                                style="padding: 4px; border-radius: 4px; border: 1px solid #ddd;">
+                                <option value="student" {% if user.role=='student' %}selected{% endif %}>Student
+                                </option>
+                                <option value="teacher" {% if user.role=='teacher' %}selected{% endif %}>Teacher
+                                </option>
+                                <option value="admin" {% if user.role=='admin' %}selected{% endif %}>Admin</option>
+                            </select>
+                        </form>
                         {% else %}
                         <span style="color: #888; font-size: 12px;">(Current User)</span>
                         {% endif %}
