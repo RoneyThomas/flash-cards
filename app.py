@@ -120,6 +120,33 @@ def index():
                            question=session["current_card"][0],
                            answer=session["current_card"][1] if session["show_answer"] else None)
 
+@app.route("/admin/users")
+@login_required
+def admin_users():
+    if current_user.role != 'admin':
+        flash("Access denied. Admin privileges required.", "error")
+        return redirect(url_for('index'))
+    
+    users = User.query.all()
+    return render_template("admin_users.html", users=users)
+
+@app.route("/admin/users/delete/<int:user_id>", methods=["POST"])
+@login_required
+def delete_user(user_id):
+    if current_user.role != 'admin':
+        flash("Access denied. Admin privileges required.", "error")
+        return redirect(url_for('index'))
+    
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash("You cannot delete yourself.", "error")
+        return redirect(url_for('admin_users'))
+        
+    db.session.delete(user)
+    db.session.commit()
+    flash(f"User {user.username} deleted successfully.", "success")
+    return redirect(url_for('admin_users'))
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()  # Create database tables
