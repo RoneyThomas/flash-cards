@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, User, Flashcard
+from models import db, User, Flashcard, Subject
 import random
 import os
 
@@ -97,55 +97,123 @@ def logout():
     flash("You have been logged out", "success")
     return redirect(url_for('login'))
 
+@app.route("/create_subject", methods=["GET", "POST"])
+@login_required
+def create_subject():
+    if request.method == "POST":
+        name = request.form.get("name")
+        if not name:
+            flash("Subject name is required", "error")
+            return render_template("create_subject.html")
+            
+        subject = Subject(name=name, user_id=current_user.id)
+        db.session.add(subject)
+        db.session.commit()
+        
+        flash("Subject created successfully!", "success")
+        return redirect(url_for('index'))
+        
+    return render_template("create_subject.html")
+
 @app.route("/create_card", methods=["GET", "POST"])
 @login_required
 def create_card():
+    subjects = Subject.query.filter_by(user_id=current_user.id).all()
+    if not subjects:
+        flash("Please create a subject first!", "error")
+        return redirect(url_for('create_subject'))
+
     if request.method == "POST":
         question = request.form.get("question")
         answer = request.form.get("answer")
+        subject_id = request.form.get("subject_id")
         
-        if not question or not answer:
-            flash("Both question and answer are required", "error")
-            return render_template("create_card.html")
+        if not question or not answer or not subject_id:
+            flash("All fields are required", "error")
+            return render_template("create_card.html", subjects=subjects)
             
-        card = Flashcard(question=question, answer=answer, user_id=current_user.id)
+        card = Flashcard(question=question, answer=answer, user_id=current_user.id, subject_id=subject_id)
         db.session.add(card)
         db.session.commit()
         
         flash("Flashcard created successfully!", "success")
         return redirect(url_for('create_card'))
         
-    return render_template("create_card.html")
+    return render_template("create_card.html", subjects=subjects)
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
 @login_required
 def index():
-    all_cards = Flashcard.query.all()
+    subjects = Subject.query.filter_by(user_id=current_user.id).all()
+    return render_template("dashboard.html", subjects=subjects)
+
+@app.route("/study/<int:subject_id>", methods=["GET", "POST"])
+def study(subject_id):
+    subject = Subject.query.get_or_404(subject_id)
     
-    if not all_cards:
-        return render_template("index.html", 
+    # Check access
+    if not subject.is_public and (not current_user.is_authenticated or subject.user_id != current_user.id):
+        flash("You do not have permission to access this subject.", "error")
+        return redirect(url_for('login'))
+
+    cards = subject.flashcards
+    if not cards:
+        return render_template("study.html", 
+                             subject=subject,
                              question="No flashcards found", 
-                             answer="Please create some cards first!",
+                             answer="This subject has no cards yet.",
                              no_cards=True)
 
-    if "current_card" not in session:
-        card = random.choice(all_cards)
-        session["current_card"] = (card.question, card.answer)
+    if "current_card_id" not in session or "subject_id" not in session or session["subject_id"] != subject_id:
+        card = random.choice(cards)
+        session["current_card_id"] = card.id
+        session["subject_id"] = subject_id
+        session["show_answer"] = False
+    
+    current_card = Flashcard.query.get(session["current_card_id"])
+    # Handle case where card might have been deleted
+    if not current_card or current_card.subject_id != subject_id:
+        card = random.choice(cards)
+        session["current_card_id"] = card.id
+        current_card = card
         session["show_answer"] = False
 
     if request.method == "POST":
         if "next" in request.form:
-            card = random.choice(all_cards)
-            session["current_card"] = (card.question, card.answer)
+            card = random.choice(cards)
+            session["current_card_id"] = card.id
+            current_card = card
             session["show_answer"] = False
         elif "show" in request.form:
             session["show_answer"] = True
+
+    return render_template("study.html",
+                           subject=subject,
+                           question=current_card.question,
+                           answer=current_card.answer if session["show_answer"] else None)
+
+@app.route("/subject/<int:subject_id>")
+@login_required
+def view_subject(subject_id):
+    subject = Subject.query.get_or_404(subject_id)
+    if subject.user_id != current_user.id:
+        flash("Access denied.", "error")
+        return redirect(url_for('index'))
+    return render_template("view_subject.html", subject=subject)
+
+@app.route("/subject/<int:subject_id>/toggle_public", methods=["POST"])
+@login_required
+def toggle_public(subject_id):
+    subject = Subject.query.get_or_404(subject_id)
+    if subject.user_id != current_user.id:
+        flash("Access denied.", "error")
+        return redirect(url_for('index'))
     
-    # Admin check for index route is removed as per the new index route logic
-    # The admin_users route handles admin-specific display
-    return render_template("index.html",
-                           question=session["current_card"][0],
-                           answer=session["current_card"][1] if session["show_answer"] else None)
+    subject.is_public = not subject.is_public
+    db.session.commit()
+    status = "public" if subject.is_public else "private"
+    flash(f"Subject is now {status}.", "success")
+    return redirect(url_for('view_subject', subject_id=subject.id))
 
 @app.route("/admin/users")
 @login_required

@@ -29,8 +29,22 @@ class Flashcard(db.Model):
     question = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
     
     user = db.relationship('User', backref=db.backref('flashcards', lazy=True))
 
     def __repr__(self):
         return f'<Flashcard {self.question[:20]}...>'
+
+class Subject(db.Model):
+    """Subject/Set model for grouping flashcards."""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    is_public = db.Column(db.Boolean, default=False)
+    
+    user = db.relationship('User', backref=db.backref('subjects', lazy=True))
+    flashcards = db.relationship('Flashcard', backref='subject', lazy=True, cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f'<Subject {self.name}>'
