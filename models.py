@@ -45,6 +45,42 @@ class Subject(db.Model):
     
     user = db.relationship('User', backref=db.backref('subjects', lazy=True))
     flashcards = db.relationship('Flashcard', backref='subject', lazy=True, cascade="all, delete-orphan")
+    price = db.Column(db.Float, default=0.0)
+    is_for_sale = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f'<Subject {self.name}>'
+
+class Purchase(db.Model):
+    """Model to track purchased subjects."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
+    purchase_date = db.Column(db.DateTime, server_default=db.func.now())
+
+    user = db.relationship('User', backref=db.backref('purchases', lazy=True))
+    subject = db.relationship('Subject', backref=db.backref('purchases', lazy=True))
+
+class Classroom(db.Model):
+    """Classroom model for teachers."""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    teacher = db.relationship('User', backref=db.backref('classrooms', lazy=True))
+    students = db.relationship('User', secondary='class_membership', backref=db.backref('enrolled_classes', lazy=True))
+
+    def __repr__(self):
+        return f'<Classroom {self.name}>'
+
+class ClassMembership(db.Model):
+    """Association table for students in classes."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    classroom_id = db.Column(db.Integer, db.ForeignKey('classroom.id'), nullable=False)
+
+    def __repr__(self):
+        # Assuming 'name' refers to the classroom name for a meaningful representation
+        # This would require accessing the related classroom object.
+        # For simplicity, let's represent by IDs for now.
+        return f'<ClassMembership User:{self.user_id} Class:{self.classroom_id}>'

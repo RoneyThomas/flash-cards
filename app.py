@@ -1,6 +1,7 @@
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, User, Flashcard, Subject
+from models import db, User, Flashcard, Subject, Purchase, Classroom, ClassMembership
 import random
 import os
 
@@ -144,8 +145,83 @@ def create_card():
 @app.route("/", methods=["GET"])
 @login_required
 def index():
-    subjects = Subject.query.filter_by(user_id=current_user.id).all()
-    return render_template("dashboard.html", subjects=subjects)
+    # Get created subjects
+    created_subjects = Subject.query.filter_by(user_id=current_user.id).all()
+    # Get purchased subjects
+    purchased_purchases = Purchase.query.filter_by(user_id=current_user.id).all()
+    purchased_subjects = [p.subject for p in purchased_purchases]
+    
+    classrooms = []
+    if current_user.role == 'teacher':
+        classrooms = Classroom.query.filter_by(teacher_id=current_user.id).all()
+    
+    return render_template("dashboard.html", 
+                         subjects=created_subjects, 
+                         purchased_subjects=purchased_subjects,
+                         classrooms=classrooms)
+
+@app.route("/create_class", methods=["GET", "POST"])
+@login_required
+def create_class():
+    if current_user.role != 'teacher':
+        flash("Only teachers can create classes.", "error")
+        return redirect(url_for('index'))
+        
+    if request.method == "POST":
+        name = request.form.get("name")
+        if not name:
+            flash("Class name is required", "error")
+            return render_template("create_class.html")
+            
+        classroom = Classroom(name=name, teacher_id=current_user.id)
+        db.session.add(classroom)
+        db.session.commit()
+        
+        flash("Class created successfully!", "success")
+        return redirect(url_for('index'))
+        
+    return render_template("create_class.html")
+
+@app.route("/class/<int:class_id>", methods=["GET", "POST"])
+@login_required
+def view_class(class_id):
+    classroom = Classroom.query.get_or_404(class_id)
+    
+    if classroom.teacher_id != current_user.id:
+        flash("Access denied.", "error")
+        return redirect(url_for('index'))
+        
+    if request.method == "POST":
+        email = request.form.get("email")
+        student = User.query.filter_by(email=email).first()
+        
+        if not student:
+            flash("User not found.", "error")
+        elif student in classroom.students:
+            flash("Student already in class.", "info")
+        else:
+            classroom.students.append(student)
+            db.session.commit()
+            flash(f"Added {student.username} to class.", "success")
+            
+    return render_template("view_class.html", classroom=classroom)
+
+@app.route("/class/<int:class_id>/student/<int:student_id>")
+@login_required
+def view_student_progress(class_id, student_id):
+    classroom = Classroom.query.get_or_404(class_id)
+    
+    if classroom.teacher_id != current_user.id:
+        flash("Access denied.", "error")
+        return redirect(url_for('index'))
+        
+    student = User.query.get_or_404(student_id)
+    if student not in classroom.students:
+        flash("Student not in this class.", "error")
+        return redirect(url_for('view_class', class_id=class_id))
+        
+    subjects = Subject.query.filter_by(user_id=student.id).all()
+    return render_template("student_progress.html", student=student, subjects=subjects, classroom=classroom)
 
 @app.route("/study/<int:subject_id>", methods=["GET", "POST"])
 def study(subject_id):
