@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Flashcards</title>
+    <title>Create Flashcard</title>
     <style>
         * {
             margin: 0;
@@ -35,7 +35,7 @@
             font-weight: 500;
         }
 
-        .logout-btn {
+        .nav-btn {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
             padding: 10px 20px;
@@ -46,79 +46,84 @@
             cursor: pointer;
             text-decoration: none;
             transition: transform 0.2s, box-shadow 0.2s;
+            margin-left: 10px;
         }
 
-        .logout-btn:hover {
+        .nav-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
         }
 
         .content {
-            text-align: center;
-            max-width: 800px;
+            max-width: 600px;
             margin: 0 auto;
-        }
-
-        .card {
             background: white;
             border-radius: 15px;
             padding: 40px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            margin-bottom: 30px;
-            min-height: 200px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
 
-        .card h2 {
+        h2 {
             color: #333;
             font-size: 28px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .form-group {
             margin-bottom: 20px;
         }
 
-        .card p {
-            color: #667eea;
-            font-size: 24px;
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
             font-weight: 600;
         }
 
-        form {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-        }
-
-        button {
-            padding: 14px 30px;
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 8px;
             font-size: 16px;
-            font-weight: 600;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             border: none;
             border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            color: white;
+            margin-top: 10px;
         }
 
-        button[name="show"] {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        button[name="next"] {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        button:hover {
+        .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        button:active {
-            transform: translateY(0);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
 
         .alert {
-            max-width: 800px;
+            max-width: 600px;
             margin: 0 auto 20px;
             padding: 12px 20px;
             border-radius: 8px;
@@ -142,18 +147,11 @@
 <body>
     <div class="header">
         <div class="welcome">
-            Welcome, <strong>{{ current_user.username }}</strong>! 👋
+            Create New Card
         </div>
         <div>
-            <a href="{{ url_for('create_card') }}" class="logout-btn"
-                style="margin-right: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">Create
-                Card</a>
-            {% if current_user.role == 'admin' %}
-            <a href="{{ url_for('admin_users') }}" class="logout-btn"
-                style="margin-right: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">Manage
-                Users</a>
-            {% endif %}
-            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            <a href="{{ url_for('index') }}" class="nav-btn">Home</a>
+            <a href="{{ url_for('logout') }}" class="nav-btn">Logout</a>
         </div>
     </div>
 
@@ -166,19 +164,19 @@
     {% endwith %}
 
     <div class="content">
-        <div class="card">
-            <h2>{{ question }}</h2>
-            {% if answer %}
-            <p><strong>{{ answer }}</strong></p>
-            {% endif %}
-        </div>
-
-        {% if not no_cards %}
+        <h2>Add Flashcard</h2>
         <form method="POST">
-            <button name="show">Show Answer</button>
-            <button name="next">Next Card</button>
+            <div class="form-group">
+                <label for="question">Question</label>
+                <input type="text" id="question" name="question" required
+                    placeholder="e.g., What is the capital of France?">
+            </div>
+            <div class="form-group">
+                <label for="answer">Answer</label>
+                <textarea id="answer" name="answer" required placeholder="e.g., Paris"></textarea>
+            </div>
+            <button type="submit" class="submit-btn">Create Card</button>
         </form>
-        {% endif %}
     </div>
 </body>
 
