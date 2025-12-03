@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Create Flashcard</title>
+    <title>Study: {{ subject.name }}</title>
     <style>
         * {
             margin: 0;
@@ -55,75 +55,80 @@
         }
 
         .content {
-            max-width: 600px;
+            text-align: center;
+            max-width: 800px;
             margin: 0 auto;
+        }
+
+        .card {
             background: white;
             border-radius: 15px;
             padding: 40px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
         }
 
-        h2 {
+        .subject-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #f0f2f5;
+            color: #666;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .card h2 {
             color: #333;
             font-size: 28px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .form-group {
             margin-bottom: 20px;
         }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
+        .card p {
+            color: #667eea;
+            font-size: 24px;
             font-weight: 600;
         }
 
-        input[type="text"],
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #eee;
-            border-radius: 8px;
+        form {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 14px 30px;
             font-size: 16px;
-            transition: border-color 0.3s;
-            font-family: inherit;
-        }
-
-        input[type="text"]:focus,
-        textarea:focus {
-            border-color: #667eea;
-            outline: none;
-        }
-
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            font-weight: 600;
             border: none;
             border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 10px;
+            color: white;
         }
 
-        .submit-btn:hover {
+        button[name="show"] {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        button[name="next"] {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
         }
 
         .alert {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto 20px;
             padding: 12px 20px;
             border-radius: 8px;
@@ -135,23 +140,20 @@
             color: #c33;
             border: 1px solid #fcc;
         }
-
-        .alert-success {
-            background-color: #efe;
-            color: #3c3;
-            border: 1px solid #cfc;
-        }
     </style>
 </head>
 
 <body>
     <div class="header">
         <div class="welcome">
-            Create New Card
+            Studying: <strong>{{ subject.name }}</strong>
         </div>
         <div>
-            <a href="{{ url_for('index') }}" class="nav-btn">Home</a>
-            <a href="{{ url_for('logout') }}" class="nav-btn">Logout</a>
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('index') }}" class="nav-btn">Dashboard</a>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="nav-btn">Login</a>
+            {% endif %}
         </div>
     </div>
 
@@ -164,28 +166,20 @@
     {% endwith %}
 
     <div class="content">
-        <h2>Add Flashcard</h2>
+        <div class="card">
+            <div class="subject-badge">{{ subject.name }}</div>
+            <h2>{{ question }}</h2>
+            {% if answer %}
+            <p><strong>{{ answer }}</strong></p>
+            {% endif %}
+        </div>
+
+        {% if not no_cards %}
         <form method="POST">
-            <div class="form-group">
-                <label for="subject_id">Subject</label>
-                <select id="subject_id" name="subject_id" required
-                    style="width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; font-size: 16px;">
-                    {% for subject in subjects %}
-                    <option value="{{ subject.id }}">{{ subject.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="question">Question</label>
-                <input type="text" id="question" name="question" required
-                    placeholder="e.g., What is the capital of France?">
-            </div>
-            <div class="form-group">
-                <label for="answer">Answer</label>
-                <textarea id="answer" name="answer" required placeholder="e.g., Paris"></textarea>
-            </div>
-            <button type="submit" class="submit-btn">Create Card</button>
+            <button name="show">Show Answer</button>
+            <button name="next">Next Card</button>
         </form>
+        {% endif %}
     </div>
 </body>
 

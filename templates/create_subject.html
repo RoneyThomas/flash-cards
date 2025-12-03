@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Create Flashcard</title>
+    <title>Create Subject</title>
     <style>
         * {
             margin: 0;
@@ -81,8 +81,7 @@
             font-weight: 600;
         }
 
-        input[type="text"],
-        textarea {
+        input[type="text"] {
             width: 100%;
             padding: 12px;
             border: 2px solid #eee;
@@ -92,15 +91,9 @@
             font-family: inherit;
         }
 
-        input[type="text"]:focus,
-        textarea:focus {
+        input[type="text"]:focus {
             border-color: #667eea;
             outline: none;
-        }
-
-        textarea {
-            min-height: 100px;
-            resize: vertical;
         }
 
         .submit-btn {
@@ -147,7 +140,7 @@
 <body>
     <div class="header">
         <div class="welcome">
-            Create New Card
+            Create New Subject
         </div>
         <div>
             <a href="{{ url_for('index') }}" class="nav-btn">Home</a>
@@ -164,27 +157,13 @@
     {% endwith %}
 
     <div class="content">
-        <h2>Add Flashcard</h2>
+        <h2>Add Subject</h2>
         <form method="POST">
             <div class="form-group">
-                <label for="subject_id">Subject</label>
-                <select id="subject_id" name="subject_id" required
-                    style="width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; font-size: 16px;">
-                    {% for subject in subjects %}
-                    <option value="{{ subject.id }}">{{ subject.name }}</option>
-                    {% endfor %}
-                </select>
+                <label for="name">Subject Name</label>
+                <input type="text" id="name" name="name" required placeholder="e.g., Mathematics, History">
             </div>
-            <div class="form-group">
-                <label for="question">Question</label>
-                <input type="text" id="question" name="question" required
-                    placeholder="e.g., What is the capital of France?">
-            </div>
-            <div class="form-group">
-                <label for="answer">Answer</label>
-                <textarea id="answer" name="answer" required placeholder="e.g., Paris"></textarea>
-            </div>
-            <button type="submit" class="submit-btn">Create Card</button>
+            <button type="submit" class="submit-btn">Create Subject</button>
         </form>
     </div>
 </body>
