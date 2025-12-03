@@ -41,9 +41,11 @@ class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    classroom_id = db.Column(db.Integer, db.ForeignKey('classroom.id'), nullable=True)
     is_public = db.Column(db.Boolean, default=False)
     
     user = db.relationship('User', backref=db.backref('subjects', lazy=True))
+    classroom = db.relationship('Classroom', backref=db.backref('subjects', lazy=True))
     flashcards = db.relationship('Flashcard', backref='subject', lazy=True, cascade="all, delete-orphan")
     price = db.Column(db.Float, default=0.0)
     is_for_sale = db.Column(db.Boolean, default=False)

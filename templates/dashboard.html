@@ -230,6 +230,27 @@
     </div>
     {% endif %}
 
+    {% if class_subjects %}
+    <h2 style="color: #333; margin: 40px auto 20px; max-width: 1000px;">Class Subjects</h2>
+    <div class="content">
+        <div class="subjects-grid">
+            {% for subject in class_subjects %}
+            <div class="subject-card" style="border: 2px solid #f093fb;">
+                <div>
+                    <div class="subject-title">{{ subject.name }}</div>
+                    <div class="card-count">{{ subject.flashcards|length }} cards</div>
+                    <div style="color: #f093fb; font-size: 12px; font-weight: 600; text-transform: uppercase;">{{
+                        subject.classroom.name }}</div>
+                </div>
+                <div class="actions">
+                    <a href="{{ url_for('study', subject_id=subject.id) }}" class="action-btn study-btn">Study</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <h2 style="color: #333; margin: 40px auto 20px; max-width: 1000px;">My Subjects</h2>
     <div class="content">
         <div class="subjects-grid">
