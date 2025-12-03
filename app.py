@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, User
+from models import db, User, Flashcard
 import random
 import os
 
@@ -23,12 +23,7 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Flashcards stored as (question, answer)
-flashcards = [
-    ("Capital of France?", "Paris"),
-    ("2 + 2 = ?", "4"),
-    ("Largest planet?", "Jupiter")
-]
+# Flashcards are now stored in the database
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -102,20 +97,52 @@ def logout():
     flash("You have been logged out", "success")
     return redirect(url_for('login'))
 
+@app.route("/create_card", methods=["GET", "POST"])
+@login_required
+def create_card():
+    if request.method == "POST":
+        question = request.form.get("question")
+        answer = request.form.get("answer")
+        
+        if not question or not answer:
+            flash("Both question and answer are required", "error")
+            return render_template("create_card.html")
+            
+        card = Flashcard(question=question, answer=answer, user_id=current_user.id)
+        db.session.add(card)
+        db.session.commit()
+        
+        flash("Flashcard created successfully!", "success")
+        return redirect(url_for('create_card'))
+        
+    return render_template("create_card.html")
+
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
+    all_cards = Flashcard.query.all()
+    
+    if not all_cards:
+        return render_template("index.html", 
+                             question="No flashcards found", 
+                             answer="Please create some cards first!",
+                             no_cards=True)
+
     if "current_card" not in session:
-        session["current_card"] = random.choice(flashcards)
+        card = random.choice(all_cards)
+        session["current_card"] = (card.question, card.answer)
         session["show_answer"] = False
 
     if request.method == "POST":
         if "next" in request.form:
-            session["current_card"] = random.choice(flashcards)
+            card = random.choice(all_cards)
+            session["current_card"] = (card.question, card.answer)
             session["show_answer"] = False
         elif "show" in request.form:
             session["show_answer"] = True
-
+    
+    # Admin check for index route is removed as per the new index route logic
+    # The admin_users route handles admin-specific display
     return render_template("index.html",
                            question=session["current_card"][0],
                            answer=session["current_card"][1] if session["show_answer"] else None)

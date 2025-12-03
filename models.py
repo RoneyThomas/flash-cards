@@ -22,3 +22,15 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return f'<User {self.username}>'
+
+class Flashcard(db.Model):
+    """Flashcard model."""
+    id = db.Column(db.Integer, primary_key=True)
+    question = db.Column(db.Text, nullable=False)
+    answer = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    user = db.relationship('User', backref=db.backref('flashcards', lazy=True))
+
+    def __repr__(self):
+        return f'<Flashcard {self.question[:20]}...>'
