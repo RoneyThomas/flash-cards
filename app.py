@@ -101,20 +101,41 @@ def logout():
 @app.route("/create_subject", methods=["GET", "POST"])
 @login_required
 def create_subject():
+    # Get classrooms if teacher
+    classrooms = []
+    if current_user.role == 'teacher':
+        classrooms = Classroom.query.filter_by(teacher_id=current_user.id).all()
+
     if request.method == "POST":
         name = request.form.get("name")
+        classroom_id = request.form.get("classroom_id")
+        
         if not name:
             flash("Subject name is required", "error")
-            return render_template("create_subject.html")
+            return render_template("create_subject.html", classrooms=classrooms)
             
         subject = Subject(name=name, user_id=current_user.id)
+        
+        if classroom_id and current_user.role == 'teacher':
+             subject.classroom_id = classroom_id
+        
+        if current_user.role == 'admin':
+            is_for_sale = request.form.get("is_for_sale") == 'on'
+            price = request.form.get("price")
+            if is_for_sale:
+                subject.is_for_sale = True
+                try:
+                    subject.price = float(price)
+                except (ValueError, TypeError):
+                    subject.price = 0.0
+        
         db.session.add(subject)
         db.session.commit()
         
         flash("Subject created successfully!", "success")
         return redirect(url_for('index'))
         
-    return render_template("create_subject.html")
+    return render_template("create_subject.html", classrooms=classrooms)
 
 @app.route("/create_card", methods=["GET", "POST"])
 @login_required
@@ -152,13 +173,20 @@ def index():
     purchased_subjects = [p.subject for p in purchased_purchases]
     
     classrooms = []
+    class_subjects = []
+    
     if current_user.role == 'teacher':
         classrooms = Classroom.query.filter_by(teacher_id=current_user.id).all()
+    elif current_user.role == 'student':
+        # Get subjects from enrolled classes
+        for classroom in current_user.enrolled_classes:
+            class_subjects.extend(classroom.subjects)
     
     return render_template("dashboard.html", 
                          subjects=created_subjects, 
                          purchased_subjects=purchased_subjects,
-                         classrooms=classrooms)
+                         classrooms=classrooms,
+                         class_subjects=class_subjects)
 
 @app.route("/create_class", methods=["GET", "POST"])
 @login_required
@@ -227,10 +255,29 @@ def view_student_progress(class_id, student_id):
 def study(subject_id):
     subject = Subject.query.get_or_404(subject_id)
     
-    # Check access
-    if not subject.is_public and (not current_user.is_authenticated or subject.user_id != current_user.id):
-        flash("You do not have permission to access this subject.", "error")
-        return redirect(url_for('login'))
+    # Check access: Owner OR Public OR Purchased OR Class Member
+    has_access = False
+    if subject.is_public:
+        has_access = True
+    elif current_user.is_authenticated:
+        if subject.user_id == current_user.id:
+            has_access = True
+        elif subject.classroom_id:
+            # Check if user is in the classroom
+            classroom = Classroom.query.get(subject.classroom_id)
+            if classroom and (current_user in classroom.students or classroom.teacher_id == current_user.id):
+                has_access = True
+        else:
+            purchase = Purchase.query.filter_by(user_id=current_user.id, subject_id=subject_id).first()
+            if purchase:
+                has_access = True
+    
+    if not has_access:
+        return render_template("study.html", 
+                             subject=subject,
+                             question="No flashcards found", 
+                             answer="This subject has no cards yet.",
+                             no_cards=True)
 
     cards = subject.flashcards
     if not cards:
