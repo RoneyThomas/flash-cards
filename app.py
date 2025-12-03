@@ -47,7 +47,7 @@ def register():
             flash("All fields are required", "error")
             return render_template("register.html")
         
-        if role not in ['student', 'teacher']:
+        if role not in ['student', 'teacher', 'admin']:
             flash("Invalid role selected", "error")
             return render_template("register.html")
         
