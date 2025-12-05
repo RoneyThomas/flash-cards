@@ -4,12 +4,42 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from models import db, User, Flashcard, Subject, Purchase, Classroom, ClassMembership
 import random
 import os
+from google.cloud.sql.connector import Connector, IPTypes
+import pg8000
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "supersecretkey")  # Needed for session handling
 
-# Configure SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///flashcards.db'
+# Database configuration
+db_user = os.environ.get("DB_USER")
+db_pass = os.environ.get("DB_PASS")
+db_name = os.environ.get("DB_NAME")
+instance_connection_name = os.environ.get("INSTANCE_CONNECTION_NAME")
+
+if instance_connection_name:
+    # Use Cloud SQL if connection name is provided
+    # Initialize Connector object
+    connector = Connector()
+
+    def getconn():
+        conn = connector.connect(
+            instance_connection_name,
+            "pg8000",
+            user=db_user,
+            password=db_pass,
+            db=db_name,
+            ip_type=IPTypes.PUBLIC,  # Can be changed to PRIVATE if needed
+        )
+        return conn
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+pg8000://"
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        "creator": getconn
+    }
+else:
+    # Fallback to SQLite
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///flashcards.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize database
